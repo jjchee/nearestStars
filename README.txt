@@ -1,5 +1,9 @@
 # nearestStars
-Plots the 100 nearest stars to Earth in various planes
+Plots the 100 nearest stars to Earth in the x-y, x-z, and y-z planes
+
+'S' represents the Sun
+The 9 closest stars are labeled '1' - '9'
+'*' represents the remaining stars
 
 Example Output:
 x-y projection
