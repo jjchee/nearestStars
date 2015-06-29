@@ -1,5 +1,7 @@
 # nearestStars
 Plots the 100 nearest stars to Earth in the x-y, x-z, and y-z planes
+Client code is located at jjchee/nearestStars/src/Foothill.java
+
 
 'S' represents the Sun
 The 9 closest stars are labeled '1' - '9'
