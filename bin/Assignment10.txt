@@ -1,0 +1,465 @@
+// Foothill.java Main and SNE_Analyzer Class ----------------------------
+import cs_1c.*;
+
+public class Foothill
+{
+   // ------- main --------------
+   public static void main(String[] args) throws Exception
+   {
+      String outString;
+      int k, arraySize, row, col;
+      double maxX, minX, maxY, minY, maxZ, minZ,
+      xRange, yRange, zRange, 
+      xConversion, yConversion, zConversion;
+      final int NUM_COLS = 70;
+      final int NUM_ROWS = 35;
+   
+      StarNearEarthReader  starInput 
+         = new StarNearEarthReader("nearest_stars.txt");
+
+      if (starInput.readError())
+      {
+         System.out.println("couldn't open " + starInput.getFileName()
+            + " for input.");
+         return;
+      }
+
+      // do this just to see if our read went well
+      System.out.println(starInput.getFileName());
+      System.out.println(starInput.getNumStars());
+
+      // create an array of objects for our own use:
+      arraySize = starInput.getNumStars();
+      SNE_Analyzer[] starArray = new SNE_Analyzer[arraySize];
+      for (k = 0; k < arraySize; k++)
+         starArray[k] =  new SNE_Analyzer( starInput.getStar(k) );
+
+      // display cartesian coords
+      for (k = 0; k < arraySize; k++)
+      {
+         System.out.println(starArray[k].getNameCommon() + " "
+               + starArray[k].coordToString());
+      }
+
+      // now for the graphing
+      // get max and min coords for scaling
+      maxX = minX = maxY = minY = maxZ = minZ = 0;
+      double xVal, yVal, zVal;
+      for (k = 0; k < arraySize; k++)
+      {
+         // not shown;
+         SNE_Analyzer star = starArray[k];
+         xVal = star.getX();
+         yVal = star.getY();
+         zVal = star.getZ();
+         if (xVal > maxX)
+         {
+            maxX = star.getX();
+         }
+         if (xVal < minX)
+         {
+            minX = xVal;
+         }
+         if (yVal > maxY)
+         {
+            maxY = star.getY();
+         }
+         if (yVal < minY)
+         {
+            minY = yVal;
+         }
+         if (zVal > maxZ)
+         {
+            maxZ = star.getZ();
+         }
+         if (zVal < minZ)
+         {
+            minZ = zVal;
+         }
+      }
+      xRange = maxX - minX;
+      yRange = maxY - minY;
+      zRange = maxZ - minZ;
+      SparseMat<Character> starMap = 
+            new SparseMat<Character>(NUM_ROWS, NUM_COLS, ' ');
+
+      System.out.println();
+      ///*
+      System.out.println("x-y projection");
+      xConversion = (NUM_COLS - 1) / xRange;
+      yConversion = (NUM_ROWS - 1) / yRange;
+
+      int rank;
+      for (k = 0; k < arraySize; k++)
+      {
+         SNE_Analyzer star = starArray[k];
+         rank = star.getRank();
+         xVal = star.getX();
+         yVal = star.getY();
+         row = (int) (yConversion * (yVal - minY));
+         col = (int) (xConversion * (xVal - minX));
+
+         if (rank < 10)
+         {
+            starMap.set(row, col, Character.forDigit(rank, 10));
+         }
+         else
+         {
+            starMap.set(row, col, '*');
+         }
+      }
+      //*/
+      /*
+      System.out.println("x-z projection");
+      xConversion = (NUM_COLS - 1) / xRange;
+      zConversion = (NUM_ROWS - 1) / zRange;
+
+      int rank;
+      for (k = 0; k < arraySize; k++)
+      {
+         SNE_Analyzer star = starArray[k];
+         rank = star.getRank();
+         xVal = star.getX();
+         zVal = star.getZ();
+         row = (int) (zConversion * (zVal - minZ));
+         col = (int) (xConversion * (xVal - minX));
+
+         if (rank < 10)
+         {
+            starMap.set(row, col, Character.forDigit(rank, 10));
+         }
+         else
+         {
+            starMap.set(row, col, '*');
+         }
+      }
+      */
+      /*
+      System.out.println("y-z projection");
+      yConversion = (NUM_COLS - 1) / yRange;
+      zConversion = (NUM_ROWS - 1) / zRange;
+
+      int rank;
+      for (k = 0; k < arraySize; k++)
+      {
+         SNE_Analyzer star = starArray[k];
+         rank = star.getRank();
+         //xVal = star.getX();
+         yVal = star.getY();
+         zVal = star.getZ();
+         row = (int) (zConversion * (zVal - minZ));
+         col = (int) (yConversion * (yVal - minY));
+
+         if (rank < 10)
+         {
+            starMap.set(row, col, Character.forDigit(rank, 10));
+         }
+         else
+         {
+            starMap.set(row, col, '*');
+         }
+      }
+      */
+
+      // set sun at center
+      row = NUM_ROWS / 2;
+      col = NUM_COLS / 2;
+      starMap.set( row, col, 'S' );
+
+      for (row = 0; row < NUM_ROWS; row++)
+      {
+         outString = "";
+         // inner loop that builds outString not shown
+         for (col = 0; col < NUM_COLS; col++)
+         {
+            outString += starMap.get(row, col);
+         }
+         System.out.println( outString );
+      }
+   }
+}
+
+class SNE_Analyzer extends StarNearEarth
+{
+   private double x, y, z;
+
+   // constructors
+
+   public SNE_Analyzer()
+   {
+      x = 0;
+      y = 0;
+      z = 0;
+   }
+
+   public SNE_Analyzer(StarNearEarth sne)
+   {
+      setRank(sne.getRank());
+      setNameCns(sne.getNameCns());
+      setNumComponents(sne.getNumComponents());
+      setNameLhs(sne.getNameLhs());
+      setRAsc(sne.getRAsc());
+      setDec(sne.getDec());
+      setPropMotionMag(sne.getPropMotionMag());
+      setPropMotionDir(sne.getPropMotionDir());
+      setParallaxMean(sne.getParallaxMean());
+      setParallaxVariance(sne.getParallaxVariance());
+      SetBWhiteDwarfFlag(sne.getWhiteDwarfFlag());
+      setSpectralType(sne.getSpectralType());
+      setMagApparent(sne.getMagApparent());
+      setMagAbsolute(sne.getMagAbsolute());
+      setMass(sne.getMass());
+      setNotes(sne.getNotes());
+      setNameCommon(sne.getNameCommon());
+      calcCartCoords();
+   }
+
+   // accessors
+   double getX()
+   {
+      return x;
+   }
+
+   double getY()
+   {
+      return y;
+   }
+
+   double getZ()
+   {
+      return z;
+   }
+
+   public void calcCartCoords()
+   {
+      double LY = 3.262 / getParallaxMean();
+      double RArad = Math.PI / 180 * getRAsc();
+      double DECrad = Math.PI / 180 * getDec();
+      x = LY * Math.cos(DECrad) * Math.cos(RArad);
+      y = LY * Math.cos(DECrad) * Math.sin(RArad);
+      z = LY * Math.sin(DECrad);
+   }
+
+   public String coordToString()
+   {
+      return "(" + x + ", " + y + ", " + z + ")";
+   }
+}
+/* ------- Example Output ----------------------------
+nearest_stars.txt
+100
+Proxima Centauri (-1.546293280034827, -1.1834782404918822, -3.7693400406408344)
+Barnard's Star (-0.05705414787937229, -5.943384488171159, 0.4879614221562781)
+Wolf 359 (-7.430302789267513, 2.113656766488175, 0.9505361784930765)
+Lalande 21185 (-6.506350814781057, 1.6423328463047302, 4.87004586958098)
+Sirius (-1.6085327082288747, 8.062124198742048, -2.4689451595593694)
+BL Ceti (7.541004909725272, 3.4771158493041323, -2.6901813997746356)
+Ross 154 (1.9099886146033012, -8.648134906359743, -3.912868986439883)
+Ross 248 (7.380576219119018, -0.5841043880942445, 7.193455565565409)
+epsilon Eridani (6.213552194969108, 8.314647528356762, -1.7292347753939203)
+Lacaille 9352 (8.465652851065245, -2.037633149684617, -6.292257314440043)
+Ross 128 (-10.903212529140005, 0.5841352454014845, -0.15331293994618095)
+EZ Aquarii A (10.189088106645116, -3.7816986689656082, -2.9736119767530935)
+Procyon (-4.767886129714378, 10.306837767247032, 1.0384929439632598)
+61 Cygni A (6.4749347722201795, -6.0972262993806945, 7.137944689593691)
+(no common name) (1.081147619370291, -5.726377170903595, 9.944846268362786)
+GX Andromedae (8.332607632236641, 0.6692059317846896, 8.0791177026848)
+epsilon Indi A (5.656607365319962, -3.156514148037102, -9.893750489540377)
+DX Cancri (-6.421284440357058, 8.382256018324014, 5.328465548795745)
+tau Ceti (10.272861338713964, 5.014108887048788, -3.264361210391229)
+Henry et al. 1997, Henry et al. 2006 (5.0270147874277376, 6.9180342435230635, -8
+.407314275653606)
+YZ Ceti (11.027734120516028, 3.6097456681732094, -3.547299532183627)
+Luyten's Star (-4.583705711867044, 11.431141134068273, 1.1264337022874917)
+Henry et al. 2006 (8.723330934708033, 8.206090333905973, 3.634488298604819)
+Henry et al. 2006 (1.0786249896945896, -5.4123281146108955, -11.296783448636157)
+Kapteyn's Star (1.8909071773962967, 8.832829004761322, -9.038744292306433)
+AX Microscopii (7.599194224620635, -6.533454296377602, -8.077083111235929)
+Kruger 60 A (6.468708349056164, -2.7463589818019627, 11.114719559664739)
+Jao et al. 2005, Costa et al. 2005 (-9.606320412439063, 3.1104734721544656, -8.4
+531790945074)
+Ross 614 A (-1.7048784625589801, 13.22471249406481, -0.655388931298056)
+Wolf 1061 (-5.144282640562471, -12.465524323172, -3.0297674855017642)
+van Maanen's Star (13.684614957343356, 2.9806012852368355, 1.3210962139524127)
+(no common name) (11.309466455844786, 0.2665223486435166, -8.635851872247539)
+Wolf 424 A (-13.987450701280986, -2.0457428763211327, 2.244232931350303)
+TZ Arietis (12.235263669852651, 7.079463940990812, 3.277077319600396)
+(no common name) (-0.5609298130342589, -5.43186888823961, 13.749622315239206)
+(no common name) (-13.811493816260297, 4.4743048989125445, -2.9108228154748446)
+(no common name) (-1.3800687637070208, -10.025940913445059, -10.81319246794408)
+G 208-044 A (5.044899808744669, -9.301225533588184, 10.36749857841038)
+WD 1142-645 (-6.3908250472502015, 0.39927714683417503, -13.633228850848031)
+(no common name) (15.175636605573494, 0.4448795613026582, -2.009402827417076)
+Ross 780 (14.245086117283028, -4.2692143436203605, -3.7805310325634776)
+Henry et al. 2006 (-7.112570453908373, 2.4369109081847693, -13.681678017946801)
+(no common name) (-11.156616725511448, 2.7059411532073794, 10.904347387429333)
+(no common name) (-9.167177171191707, 4.7028649068897375, 12.043869531948205)
+(no common name) (-13.578271901860228, 6.360527338109189, 5.418779089988099)
+(no common name) (8.470209146694991, -6.292444091514143, -12.14219662433262)
+(no common name) (7.589544870148619, 10.797160901372031, -9.388862673050967)
+Costa et al. 2005 (7.9766479826783145, 7.639314940065454, -11.850010166755984)
+(no common name) (-1.1686202977228226, -11.631033289348316, -11.4150338286823)
+omicron 2 Eridani (7.1684465143935014, 14.578910676825814, -2.1829072585159004)
+EV Lacertae (11.186085948138413, -3.698541797166734, 11.510861990193678)
+70 Ophiuchi A (0.39543574371950474, -16.625708817467245, 0.726099416134548)
+Altair (7.683130842751442, -14.636793912766256, 2.579289341649488)
+EI Cancri (-11.265375954279165, 11.44040780744815, 5.7684327245105145)
+Henry et al. 2006 (-0.0037231658829131285, 17.065735050691273, 0.806789769860654
+6)
+Henry et al. 2006 (4.317946004675097, 16.681244266392785, -2.0993409605432016)
+(no common name) (-3.4370913507857095, 0.18489281092269255, 17.211934005749015)
+Wolf 498 (-15.324727080737995, -7.616986495610075, 4.550748562763216)
+(no common name) (11.711376213592787, -12.498642742714067, -5.228329182383283)
+Stein 2051 (3.517279200086466, 8.617038240360827, 15.475898871073841)
+(no common name) (-3.598092530199582, 14.755305304262334, 9.964317221306036)
+(no common name) (2.399164126762291, -15.313455773234473, 10.06534250378411)
+Wolf 1453 (2.3090260090928707, 18.439563962063094, -1.194327093213436)
+(no common name) (8.137112423089073, 16.558068150668703, -3.1149709733393154)
+sigma Draconis (2.561187790112302, -6.008252627524452, 17.61982181100295)
+(no common name) (-0.8057337269792348, 17.46337877122848, -7.015201230058421)
+(no common name) (-0.6009689461966485, -10.241253370968245, -15.991598416745335)
+Wolf 1055 (6.256723160371619, -17.93745546497709, 1.718492983576037)
+Ross 47 (1.4544758133589524, 18.63680669724297, 4.140630968420611)
+(no common name) (-12.781469976081276, -12.501981591309868, -7.01237908279098)
+Jao et al. 2005 (4.66586658798376, -12.681454032050427, -13.77812405192475)
+(no common name) (19.319434892163613, -0.9110814217838615, 0.8109998542497681)
+eta Cassiopei A (10.083051501574305, 2.1938524846330867, 16.39592295884205)
+(no common name) (-8.75306249337614, -11.636820944417469, -12.781419105703112)
+(no common name) (18.60283885128522, 1.2573417601436143, -5.3936329440692425)
+Ross 882 (-8.569445684330617, 17.441019688009863, 1.2064202013656653)
+36 Ophiuchi A (-3.3708011877066837, -17.082461549090617, -8.720264759886762)
+(no common name) (8.63472438820302, -13.400609626408311, -11.625292624112227)
+82 Eridani (9.286741477362405, 11.059338378781042, -13.499667228475726)
+(no common name) (-0.3367824890291008, -6.480292739939325, 18.712520596182145)
+delta Pavonis (4.283522662568185, -6.807606820840904, -18.220683012395934)
+QY Aurigae A (-4.710766798243793, 14.936855806464763, 12.471333711812747)
+HN Librae (-15.28833797040959, -12.189964128335564, -4.341807458363677)
+(no common name) (-14.17252652138047, 10.14965059144213, 9.869267046683166)
+(no common name) (-9.147183640081229, 8.066691930271178, 16.001815933909718)
+(no common name) (7.869865111406448, -11.903230111188838, -14.351474282554207)
+Wolf 562 (-13.082264980277813, -15.512778538820603, -2.751689785477283)
+EQ Pegasi (19.296365472144878, -2.3806919935336524, 7.052437729911085)
+Henry et al. 2006 (-13.671751957898799, 13.626093342730766, 7.734028900268258)
+Henry et al. 2006 (-16.07646311658482, -2.7492034530838394, -12.918522539223567)
+(no common name) (-3.0247249065911155, -14.26591724438214, 14.925989802585287)
+(no common name) (-13.199816381359483, -12.817596871551537, -9.850686875131903)
+(no common name) (-5.96857743941431, -14.643813998900916, 13.681140963310675)
+WD 0552-041 (0.44414722427483266, 20.984711355742135, -1.5308286302026246)
+Wolf 630 A (-5.787224715866445, -20.00661791630325, -3.0518155029454337)
+(no common name) (11.289692816090243, -2.333702210595365, 17.86683536959636)
+Jao et al. 2005 (-6.342090626234481, 4.327632686344061, -19.882305735256153)
+GL Virginis (-20.861389800148043, -1.733447817764015, 4.1165389272145685)
+(no common name) (-5.030065120118531, -11.486031815262264, 17.45276292887482)
+Ross 104 (-19.340529158657702, 5.176249783415439, 8.429745096734456)
+
+x-y projection
+                         *                                            
+                                              *                       
+                              *     *                                 
+             *                         *                              
+                         *    *                  *                    
+             *                                    *                   
+         *   *      *     *      *         *     *     *              
+                           *                                          
+                                 **         *                         
+                                       7                              
+         *                                 *                          
+                                   * *  *     * * *                   
+                                  *  *                                
+                                             *       * *    *         
+        *  *                                  *   *    *            * 
+*                                1                                   *
+                        *    *                  8      *     *        
+                 *      4          S              *                *  
+                *      *                             *                
+                   *                            6     *    *          
+  *         *       *   *                            *                
+            *                                                         
+                                            *    *      *             
+                    *   *        5     * *    9   *                   
+                                                                      
+           *               *                    *  *                  
+                *          *                                          
+            *                   *                                     
+                           * *                  *                     
+                                                                      
+                                   *       *     *                    
+                     *            *    *                              
+                                      *                               
+                                                                      
+                                    *                                 
+
+x-z projection
+                        *                                             
+                                           *                          
+                                                                      
+                                  *                                   
+                                                 *                    
+                       **                  *       *                  
+        *           *                             *                   
+                                 *   *           **                   
+             *                               *                        
+                              *        *        *      *              
+                   *                        *   *                     
+             *                    *               *                   
+                                                       *           *  
+         *                                                            
+            *            **      1     7         *   **     *         
+             *                   5         *  9 *            *        
+                                *   *  *                              
+                 *                 S                                  
+                     * 3   *       **                      *         *
+           *                                  *  *                    
+                                                  *     *             
+*        *              4             *                               
+            *   *       *                                             
+                                              * 8                   * 
+  *         *                                     *                   
+                                                                      
+           *                 *       * *    *                         
+                *                             *        *              
+                    *      *                                          
+                         *        *                                   
+                              *                                       
+                    *                    *           *                
+                           * *                                        
+                                        *              *              
+                                   *                                  
+
+y-z projection
+                                        *                             
+                      *                                               
+                                                                      
+                *                                                     
+             *                                                        
+            *                     *  *              *                 
+              *        *     *                                        
+           *  * *       *                     *                       
+            *               *                                         
+    *                             *             *  *                  
+                      *               *      *                        
+            *                 *                                *      
+            *                      *                                  
+             *                                                        
+*           *      7      **   1       * **                  *        
+       *                          *    6       9          *  *        
+                                                       *        *    *
+                       2          *S                                  
+     *                          *    3*            **         **      
+   *     *                    *                                       
+                                             * *                      
+                    *         *     4                            *    
+                                            *  *    *                 
+                       *     *  8                                     
+                                  *       *             *             
+                                                                      
+       *          *     *                         *       *           
+                           * *        *                               
+                                         *                *           
+         *              *                                             
+         *                                                            
+                                     *         **                     
+              *                  *                                    
+                       *     *                                        
+                      *                                               
+ ---------- End of Example Output -----------------*/
